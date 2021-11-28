@@ -1,0 +1,167 @@
+@page "/additem"
+@using Project.Entities
+@using Serilog
+@inject NavigationManager NavManager
+@inject Project.Handler.IDataHandler _idatahander;
+@using Syncfusion.Blazor.RichTextEditor
+
+<section class="section_additem">
+
+    <div class="top_area">
+        <span id="left_arrow"> &#8592; </span>
+        <span id="left_arrow_text"> Add Item </span>
+    </div>
+
+    <div class="form_container">
+
+        <EditForm Model="ItemModel" OnValidSubmit="FormSubmitted">
+
+        <div class="top_side">
+            <figure class="left_side">
+                <input type="text" placeholder="Item Name" @bind-value="ItemModel.name" id="item_name"/>
+                <input type="text" placeholder="Item Quantity" @bind-value="ItemModel.quantity"  id="item_quantity"/>
+                <input type="text" placeholder="Net Amount" @bind-value="ItemModel.net_amount" id="item_net_amount"/>
+
+                <input type="text" placeholder="Gross Amount" disabled @bind-value="ItemModel.gross_amount"  id="item_gross_amount"/>
+                
+               
+                <div class="container" id="item_description">
+                    <SfRichTextEditor @bind-Value="@ItemModel.description" SaveInterval="1">
+                            <RichTextEditorToolbarSettings Items="@Tools"></RichTextEditorToolbarSettings>
+                    </SfRichTextEditor>
+                </div>
+
+            </figure>
+            <figure class="right_side">
+                <select id="item_category" @bind="ItemModel.item_category">
+                    <option> Item Category </option>
+                    <option value="Category 1"> Item Category 1 </option>
+                    <option value="Category 2"> Item Category 2 </option>
+                </select>
+                <select id="item_commission" @bind="ItemModel.item_unit">
+                    <option value="unit 1"> Unit </option>
+                    <option value="unit 2"> Unit 2 </option>
+                </select>
+                <select id="item_tax" @bind="ItemModel.tax">
+                    <option selected value=0> Tax </option>
+                    <option value=0.4> Tax 40% </option>
+                    <option value=0.5> Tax 50% </option>
+                </select>
+                <select id="item_discount" @bind="ItemModel.discount">
+                    <option value=0> Discount </option>
+                    <option  value=0.2> Christmas Discount 20% </option>
+                    <option value=0.3> Fast Sales 30% </option>
+                </select>
+            </figure>
+        </div>
+
+        <div class="middle_side"></div>
+        
+        <div class="buttom_side">
+            <input type="submit" id="add_button"/>
+            <a href="" id="cancel_button"> Cancel </a>
+        </div>
+
+        <DataAnnotationsValidator/>
+
+        <ValidationSummary/>
+
+        </EditForm>
+        
+    </div>
+</section>
+
+
+@code{
+    private string netamount {get; set;} = string.Empty;
+    private string taxpercent {get; set;} = string.Empty;
+    private string discountpercent {get; set;} = string.Empty;
+
+    public double GetGrossAmount{
+
+        get{
+            double temp_amount = 0;
+            try{
+                temp_amount = Convert.ToDouble(ItemModel.net_amount);
+                temp_amount = (temp_amount) + (temp_amount * Convert.ToDouble(ItemModel.tax));
+                temp_amount = (temp_amount) - (temp_amount * Convert.ToDouble(ItemModel.discount));
+
+            }
+            catch(Exception e){
+                Log.Error(e.Message);
+                temp_amount = 0;
+            }
+            return temp_amount;
+        }
+
+    }
+
+     private List<ToolbarItemModel> Tools = new List<ToolbarItemModel>()
+    {
+        new ToolbarItemModel() { Command = ToolbarCommand.Bold },
+        new ToolbarItemModel() { Command = ToolbarCommand.Italic },
+        new ToolbarItemModel() { Command = ToolbarCommand.Underline },
+        new ToolbarItemModel() { Command = ToolbarCommand.StrikeThrough },
+        new ToolbarItemModel() { Command = ToolbarCommand.FontName },
+        new ToolbarItemModel() { Command = ToolbarCommand.FontSize },
+        new ToolbarItemModel() { Command = ToolbarCommand.FontColor },
+        new ToolbarItemModel() { Command = ToolbarCommand.BackgroundColor },
+        new ToolbarItemModel() { Command = ToolbarCommand.LowerCase },
+        new ToolbarItemModel() { Command = ToolbarCommand.UpperCase },
+        new ToolbarItemModel() { Command = ToolbarCommand.SuperScript },
+        new ToolbarItemModel() { Command = ToolbarCommand.SubScript },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Formats },
+        new ToolbarItemModel() { Command = ToolbarCommand.Alignments },
+        new ToolbarItemModel() { Command = ToolbarCommand.NumberFormatList },
+        new ToolbarItemModel() { Command = ToolbarCommand.BulletFormatList },
+        new ToolbarItemModel() { Command = ToolbarCommand.Outdent },
+        new ToolbarItemModel() { Command = ToolbarCommand.Indent },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.CreateLink },
+        new ToolbarItemModel() { Command = ToolbarCommand.Image },
+        new ToolbarItemModel() { Command = ToolbarCommand.CreateTable },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.ClearFormat },
+        new ToolbarItemModel() { Command = ToolbarCommand.Print },
+        new ToolbarItemModel() { Command = ToolbarCommand.SourceCode },
+        new ToolbarItemModel() { Command = ToolbarCommand.FullScreen },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Undo },
+        new ToolbarItemModel() { Command = ToolbarCommand.Redo }
+    };
+
+
+    protected Project.Entities.Item ItemModel {get;set;} = new Project.Entities.Item();
+    public void FormSubmitted(){
+        ItemModel.gross_amount = GetGrossAmount;
+        Console.WriteLine("Name " + ItemModel.name);
+        Console.WriteLine("Quantity " + ItemModel.quantity);
+        Console.WriteLine("Net Amount " + ItemModel.net_amount);
+        Console.WriteLine("Gross Amount " + ItemModel.gross_amount);
+        Console.WriteLine("Category " + ItemModel.item_category);
+        Console.WriteLine("Unit " + ItemModel.item_unit);
+        Console.WriteLine("Tax " + ItemModel.tax);
+        Console.WriteLine("Discount " + ItemModel.discount);
+        try{
+        Project.Entities.Item new_item = new Project.Entities.Item{
+            id = System.Guid.NewGuid().ToString(),
+            name =  ItemModel.name,
+            quantity =  ItemModel.quantity,
+            net_amount = ItemModel.net_amount,
+            gross_amount =  ItemModel.gross_amount,
+            item_category = ItemModel.item_category,
+            description = ItemModel.description,
+            item_unit = ItemModel.item_unit,
+            tax =  ItemModel.tax,
+            discount = ItemModel.discount
+        };
+        _idatahander.AddItem(new_item);
+        NavManager.NavigateTo("/allitems");
+
+        }
+        catch(Exception ex){
+            Log.Error(ex.Message);
+        }
+    }
+}
